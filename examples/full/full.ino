@@ -1,7 +1,7 @@
 /*
  * timer_full
  *
- * Full example using the arduino-timer library.
+ * Full example using the arduino-timer-cpp17 library.
  * Shows:
  *  - Setting a different number of tasks with microsecond resolution
  *  - disabling a repeated function
@@ -10,41 +10,37 @@
  *
  */
 
-#include <arduino-timer.h>
+#include <arduino-timer-cpp17.h>
 
-auto timer = timer_create_default(); // create a timer with default settings
-Timer<> default_timer; // save as above
+auto timerset = Timers::create_default(); // create a TimerSet with default settings
+Timers::TimerSet<> default_timerset; // same as above
 
-// create a timer that can hold 1 concurrent task, with microsecond resolution
-// and a custom handler type of 'const char *
-Timer<1, micros, const char *> u_timer;
+// create a TimerSet that can hold 1 concurrent task, with microsecond resolution
+Timers::TimerSet<1, micros, delayMicroseconds> microtimerset;
 
+// create a TimerSet that holds 16 tasks, with millisecond resolution
+Timers::TimerSet<16, millis> t_timerset;
 
-// create a timer that holds 16 tasks, with millisecond resolution,
-// and a custom handler type of 'const char *
-Timer<16, millis, const char *> t_timer;
-
-bool toggle_led(void *) {
+Timers::HandlerResult toggle_led() {
   digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN)); // toggle the LED
-  return true; // repeat? true
+  return Timers::TimerStatus::repeat;
 }
 
-bool print_message(const char *m) {
+Timers::HandlerResult print_message(const char *message) {
   Serial.print("print_message: ");
-  Serial.println(m);
-  return true; // repeat? true
+  Serial.println(message);
+  return Timers::TimerStatus::repeat;
 }
 
 size_t repeat_count = 1;
-bool repeat_x_times(void *opaque) {
-  size_t limit = (size_t)opaque;
-
+Timers::HandlerResult repeat_x_times(size_t limit) {
   Serial.print("repeat_x_times: ");
   Serial.print(repeat_count);
   Serial.print("/");
   Serial.println(limit);
 
-  return ++repeat_count <= limit; // remove this task after limit reached
+  // remove this task after limit reached
+  return ++repeat_count <= limit ? Timers::TimerStatus::repeat : Timers::TimerStatus::completed;
 }
 
 void setup() {
@@ -52,36 +48,36 @@ void setup() {
   pinMode(LED_BUILTIN, OUTPUT); // set LED pin to OUTPUT
 
   // call the toggle_led function every 500 millis (half second)
-  timer.every(500, toggle_led);
+  timerset.every(500, toggle_led);
 
   // call the repeat_x_times function every 1000 millis (1 second)
-  timer.every(1000, repeat_x_times, (void *)10);
+  timerset.every(1000, [](){ return repeat_x_times(10); });
 
   // call the print_message function every 1000 millis (1 second),
   // passing it an argument string
-  t_timer.every(1000, print_message, "called every second");
+  t_timerset.every(1000, [](){ return print_message("called every second"); });
 
   // call the print_message function in five seconds
-  t_timer.in(5000, print_message, "delayed five seconds");
+  t_timerset.in(5000, [](){ return print_message("delayed five seconds"); });
 
   // call the print_message function at time + 10 seconds
-  t_timer.at(millis() + 10000, print_message, "call at millis() + 10 seconds");
+  t_timerset.at(millis() + 10000, [](){ return print_message("call at millis() + 10 seconds"); });
 
-  // call the toggle_led function every 500 millis (half second)
-  auto task = timer.every(500, toggle_led);
-  timer.cancel(task); // this task is now cancelled, and will not run
+  // call the toggle_led function every 500 millis (half-second)
+  auto timer = timerset.every(500, toggle_led);
+  timerset.cancel(timer); // this task is now cancelled, and will not run
 
   // call print_message in 2 seconds, but with microsecond resolution
-  u_timer.in(2000000, print_message, "delayed two seconds using microseconds");
+  microtimerset.in(2000000, [](){ return print_message("delayed two seconds using microseconds"); });
 
-  if (!u_timer.in(5000, print_message, "never printed")) {
-  /* this fails because we created u_timer with only 1 concurrent task slot */
+  if (!microtimerset.in(5000, [](){ return print_message("never printed"); })) {
+    /* this fails because we created microtimerset with only 1 concurrent timer slot */
     Serial.println("Failed to add microsecond event - timer full");
   }
 }
 
 void loop() {
-  timer.tick(); // tick the timer
-  t_timer.tick();
-  u_timer.tick();
+  timerset.tick();
+  t_timerset.tick();
+  microtimerset.tick();
 }

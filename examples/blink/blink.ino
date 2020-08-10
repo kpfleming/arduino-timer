@@ -1,26 +1,26 @@
 /*
  * timer_blink
  *
- * Blinks the built-in LED every second using the arduino-timer library.
+ * Blinks the built-in LED every second using the arduino-timer-cpp17 library.
  *
  */
 
-#include <arduino-timer.h>
+#include <arduino-timer-cpp17.h>
 
-auto timer = timer_create_default(); // create a timer with default settings
+auto timerset = Timers::create_default(); // create a TimerSet with default settings
 
-bool toggle_led(void *) {
+Timers::HandlerResult toggle_led() {
   digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN)); // toggle the LED
-  return true; // repeat? true
+  return  Timers::TimerStatus::repeat;
 }
 
 void setup() {
   pinMode(LED_BUILTIN, OUTPUT); // set LED pin to OUTPUT
 
   // call the toggle_led function every 1000 millis (1 second)
-  timer.every(1000, toggle_led);
+  timerset.every(1000, toggle_led);
 }
 
 void loop() {
-  timer.tick(); // tick the timer
+  timerset.tick_and_delay(); // tick the timer
 }
