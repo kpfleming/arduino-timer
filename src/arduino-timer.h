@@ -32,8 +32,7 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef _KPF_ARDUINO_TIMER_H__
-#define _KPF_ARDUINO_TIMER_H__
+#pragma once
 
 #include <Arduino.h>
 
@@ -245,5 +244,3 @@ create_default()
 }
 
 };
-
-#endif
