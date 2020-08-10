@@ -9,7 +9,7 @@ functionality. As a result this library requires that the Arduino IDE toolchain 
 
 Include the library and create a *TimerSet* instance.
 ```cpp
-#include <arduino-timer.h>
+#include <arduino-timer-cpp17.h>
 
 auto timerset = Timers::create_default();
 ```
