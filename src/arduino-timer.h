@@ -32,171 +32,222 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef _CM_ARDUINO_TIMER_H__
-#define _CM_ARDUINO_TIMER_H__
+#ifndef _KPF_ARDUINO_TIMER_H__
+#define _KPF_ARDUINO_TIMER_H__
 
-#if defined(ARDUINO) && ARDUINO >= 100
 #include <Arduino.h>
-#else
-#include <WProgram.h>
-#endif
+
+#undef max
+#undef min
+
+#include <algorithm>
+#include <array>
+#include <functional>
+#include <limits>
+#include <optional>
+#include <tuple>
 
 #ifndef TIMER_MAX_TASKS
     #define TIMER_MAX_TASKS 0x10
 #endif
 
-template <
-    size_t max_tasks = TIMER_MAX_TASKS, /* max allocated tasks */
-    unsigned long (*time_func)() = millis, /* time function for timer */
-    typename T = void * /* handler argument type */
->
-class Timer {
-  public:
+#ifndef TIMERSET_DEFAULT_TIMERS
+    #define TIMERSET_DEFAULT_TIMERS 0x10
+#endif
 
-    typedef uintptr_t Task; /* public task handle */
-    typedef bool (*handler_t)(T opaque); /* task handler func signature */
+namespace Timers {
 
-    /* Calls handler with opaque as argument in delay units of time */
-    Task
-    in(unsigned long delay, handler_t h, T opaque = T())
-    {
-        return task_id(add_task(time_func(), delay, h, opaque));
-    }
+typedef unsigned long Timepoint;
 
-    /* Calls handler with opaque as argument at time */
-    Task
-    at(unsigned long time, handler_t h, T opaque = T())
-    {
-        const unsigned long now = time_func();
-        return task_id(add_task(now, time - now, h, opaque));
-    }
+enum class TimerStatus
+	{
+	 complete,
+	 repeat,
+	 reschedule
+	};
 
-    /* Calls handler with opaque as argument every interval units of time */
-    Task
-    every(unsigned long interval, handler_t h, T opaque = T())
-    {
-        return task_id(add_task(time_func(), interval, h, opaque, interval));
-    }
+typedef std::tuple<TimerStatus, Timepoint> HandlerResult;
 
-    /* Cancel the timer task */
-    void
-    cancel(Task &task)
-    {
-        if (!task) return;
+typedef std::function<HandlerResult (void)> Handler;
 
-        for (size_t i = 0; i < max_tasks; ++i) {
-            struct task * const t = &tasks[i];
+struct Timer {
+	Handler handler;
+	Timepoint start; // when timer was added (or repeat execution began)
+	Timepoint expires; // when the timer expires
+	Timepoint repeat; // default repeat interval
 
-            if (t->handler && (t->id ^ task) == (uintptr_t)t) {
-                remove(t);
-                break;
-            }
-        }
-
-        task = (Task)NULL;
-    }
-
-    /* Ticks the timer forward - call this function in loop() */
-    unsigned long
-    tick()
-    {
-        unsigned long ticks = (unsigned long)-1;
-
-        for (size_t i = 0; i < max_tasks; ++i) {
-            struct task * const task = &tasks[i];
-
-            if (task->handler) {
-                const unsigned long t = time_func();
-                const unsigned long duration = t - task->start;
-
-                if (duration >= task->expires) {
-                    task->repeat = task->handler(task->opaque) && task->repeat;
-
-                    if (task->repeat) task->start = t;
-                    else remove(task);
-                } else {
-                    const unsigned long remaining = task->expires - duration;
-                    ticks = remaining < ticks ? remaining : ticks;
-                }
-            }
-        }
-
-        return ticks == (unsigned long)-1 ? 0 : ticks;
-    }
-
-  private:
-
-    size_t ctr;
-
-    struct task {
-        handler_t handler; /* task handler callback func */
-        T opaque; /* argument given to the callback handler */
-        unsigned long start,
-                      expires; /* when the task expires */
-        size_t repeat, /* repeat task */
-               id;
-    } tasks[max_tasks];
-
-    inline
-    void
-    remove(struct task *task)
-    {
-        task->handler = NULL;
-        task->opaque = T();
-        task->start = 0;
-        task->expires = 0;
-        task->repeat = 0;
-        task->id = 0;
-    }
-
-    inline
-    Task
-    task_id(const struct task * const t)
-    {
-        const Task id = (Task)t;
-
-        return id ? id ^ t->id : id;
-    }
-
-    inline
-    struct task *
-    next_task_slot()
-    {
-        for (size_t i = 0; i < max_tasks; ++i) {
-            struct task * const slot = &tasks[i];
-            if (slot->handler == NULL) return slot;
-        }
-
-        return NULL;
-    }
-
-    inline
-    struct task *
-    add_task(unsigned long start, unsigned long expires,
-             handler_t h, T opaque, bool repeat = 0)
-    {
-        struct task * const slot = next_task_slot();
-
-        if (!slot) return NULL;
-
-        if (++ctr == 0) ++ctr; // overflow
-
-        slot->id = ctr;
-        slot->handler = h;
-        slot->opaque = opaque;
-        slot->start = start;
-        slot->expires = expires;
-        slot->repeat = repeat;
-
-        return slot;
-    }
+	// ensure that these objects will never be copied or moved
+	// (this could only happen by accident)
+	Timer() = default;
+	Timer(const Timer&) = delete;
+	Timer& operator=(const Timer&) = delete;
 };
 
-/* create a timer with the default settings */
-inline Timer<>
-timer_create_default()
+typedef std::optional<std::reference_wrapper<Timer>> TimerHandle;
+
+template <
+	size_t max_timers = TIMERSET_DEFAULT_TIMERS, // max number of timers
+	Timepoint (*time_func)() = millis, // time function for timer
+	void (*delay_func)(Timepoint) = delay // delay function corresponding to time_func
+	>
+class TimerSet {
+	std::array<Timer, max_timers> timers;
+
+	inline
+	void
+	remove(TimerHandle handle)
+	{
+		if (!handle) {
+			return;
+		}
+
+		auto& timer = handle.value().get();
+
+		timer.handler = Handler();
+		timer.start = 0;
+		timer.expires = 0;
+		timer.repeat = 0;
+	}
+
+	inline
+	auto
+	next_timer_slot()
+	{
+		return std::find_if(timers.begin(), timers.end(), [](Timer& t){ return !t.handler; });
+	}
+
+	inline
+	TimerHandle
+	add_timer(Timepoint start, Timepoint expires, Handler h, Timepoint repeat = 0)
+	{
+		if (auto timer = next_timer_slot(); timer != timers.end()) {
+			timer->handler = h;
+			timer->start = start;
+			timer->expires = expires;
+			timer->repeat = repeat;
+
+			return TimerHandle(*timer);
+		}
+		else {
+			return TimerHandle();
+		}
+	}
+
+public:
+	// Calls handler in delay units of time
+	TimerHandle
+	in(Timepoint delay, Handler h)
+	{
+		return add_timer(time_func(), delay, h);
+	}
+
+	// Calls handler at time
+	TimerHandle
+	at(Timepoint time, Handler h)
+	{
+		const Timepoint now = time_func();
+		return add_timer(now, time - now, h);
+	}
+
+	// Calls handler every interval units of time
+	TimerHandle
+	every(Timepoint interval, Handler h)
+	{
+		return add_timer(time_func(), interval, h, interval);
+	}
+
+	// Calls handler immediately and every interval units of time
+	TimerHandle
+	now_and_every(Timepoint interval, Handler h)
+	{
+		const Timepoint now = time_func();
+		return add_timer(now, now, h, interval);
+	}
+
+	// Cancels timer
+	void
+	cancel(TimerHandle handle)
+	{
+		if (!handle) {
+			return;
+		}
+
+		auto timer = handle.value().get();
+
+		if (!timer.handler) {
+			return;
+		}
+
+		remove(timer);
+	}
+
+	// Ticks the timerset forward - call this function in loop()
+	// returns Timepoint of next timer expiration */
+	Timepoint
+	tick()
+	{
+		Timepoint next_expiration = std::numeric_limits<Timepoint>::max();
+
+		// execute handlers for any timers which have expired
+		for (auto& timer: timers) {
+			if (!timer.handler) {
+				continue;
+			}
+
+			Timepoint now = time_func();
+			Timepoint elapsed = now - timer.start;
+
+			if (elapsed >= timer.expires) {
+				auto [ status, next ] = timer.handler();
+
+				switch (status) {
+				case TimerStatus::complete:
+					remove(timer);
+					break;
+				case TimerStatus::repeat:
+					timer.start = now;
+					timer.expires = timer.repeat;
+					break;
+				case TimerStatus::reschedule:
+					timer.start = now;
+					timer.expires = next;
+					break;
+				}
+			}
+		}
+
+		// compute lowest remaining time after all handlers have been executed
+		// (some timers may have expired during handler execution)
+		const Timepoint now = time_func();
+
+		for (auto& timer: timers) {
+			if (!timer.handler) {
+				continue;
+			}
+
+			Timepoint remaining = timer.expires - (now - timer.start);
+			next_expiration = remaining < next_expiration ? remaining : next_expiration;
+		}
+
+		return next_expiration == std::numeric_limits<Timepoint>::max() ? 0 : next_expiration;
+	}
+
+	// Ticks the timerset forward, then delays until next timer is due
+	void
+	tick_and_delay()
+	{
+		delay_func(tick());
+	}
+};
+
+
+// create TimerSet with default settings
+inline TimerSet<>
+create_default()
 {
-    return Timer<>();
+	return TimerSet<>();
 }
+
+};
 
 #endif
