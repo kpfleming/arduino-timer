@@ -47,10 +47,6 @@
 #include <optional>
 #include <tuple>
 
-#ifndef TIMER_MAX_TASKS
-    #define TIMER_MAX_TASKS 0x10
-#endif
-
 #ifndef TIMERSET_DEFAULT_TIMERS
     #define TIMERSET_DEFAULT_TIMERS 0x10
 #endif
