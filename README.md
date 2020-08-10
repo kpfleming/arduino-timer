@@ -39,14 +39,14 @@ void loop() {
 Make a function to call (without arguments) when a *Timer* expires.
 ```cpp
 Timers::HandlerResult function_to_call() {
-    return { Timers::TimerStatus::repeat, 0 }; // to repeat the action - 'completed' to stop
+    return { Timers::TimerStatus::repeat }; // to repeat the action - 'completed' to stop
 }
 ```
 
 Make a function to call (with an argument) when a *Timer* expires.
 ```cpp
 Timers::HandlerResult function_to_call_with_arg(int value) {
-    return { Timers::TimerStatus::completed, 0 }; // to stop the timer - 'repeat' to repeat the action
+    return { Timers::TimerStatus::completed }; // to stop the timer - 'repeat' to repeat the action
 }
 ```
 
@@ -57,9 +57,9 @@ change its own repeat interval to 5 seconds (5000 millis).
 Timers::HandlerResult function_to_call_and_reschedule() {
     if (digitalRead(4)) {
         return { Timers::TimerStatus::reschedule, 5000 }; // to change the repeat interval to 5000 ms
-	} else {
-        return { Timers::TimerStatus::repeat, 0 }; // to repeat the action - 'completed' to stop
-	}
+    } else {
+        return { Timers::TimerStatus::repeat }; // to repeat the action - 'completed' to stop
+    }
 }
 ```
 
@@ -155,7 +155,7 @@ auto timerset = Timers::create_default(); // create a timerset with default sett
 
 Timers::HandlerResult toggle_led() {
   digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN)); // toggle the LED
-  return { Timers::TimerStatus::repeat, 0 }; // keep timer active? true
+  return { Timers::TimerStatus::repeat }; // keep timer active? true
 }
 
 void setup() {

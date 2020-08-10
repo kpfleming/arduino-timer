@@ -44,7 +44,6 @@
 #include <functional>
 #include <limits>
 #include <optional>
-#include <tuple>
 
 #ifndef TIMERSET_DEFAULT_TIMERS
     #define TIMERSET_DEFAULT_TIMERS 0x10
@@ -61,7 +60,16 @@ enum class TimerStatus
 	 reschedule
 	};
 
-using HandlerResult = std::tuple<TimerStatus, Timepoint>;
+struct HandlerResult {
+	TimerStatus status;
+	Timepoint next;
+
+	// must be constructed with at least a status, but can be constructed
+	// with status and next
+	HandlerResult() = delete;
+	HandlerResult(TimerStatus status) : status(status) {}
+	HandlerResult(TimerStatus status, Timepoint next) : status(status), next(next) {}
+};
 
 using Handler = std::function<HandlerResult (void)>;
 
