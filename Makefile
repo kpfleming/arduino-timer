@@ -1,4 +1,4 @@
-NAME := arduino-timer
+NAME := arduino-timer-cpp17
 VERSION := $(shell git describe --tags --always --dirty)
 
 $(NAME)-$(VERSION).zip:
