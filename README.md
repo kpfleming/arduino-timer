@@ -1,65 +1,100 @@
-# arduino-timer - library for delaying function calls
+# arduino-timer-cpp17 - library for scheduling function calls
 
-Simple *non-blocking* timer library for calling functions **in / at / every** specified units of time. Supports millis, micros, time rollover, and compile time configurable number of tasks.
+Simple *non-blocking* timer library for calling functions **in / at / every** specified units of time. Supports millis, micros, time rollover, and compile-time configurable number of timers.
+
+This library was inspired by [Michael Contreras' arduino-timer library](https://github.com/sponsors/contrem/arduino-timer), but has been rewritten to make use of 'modern C++' types and
+functionality. As a result this library requires that the Arduino IDE toolchain be manually configured for "gnu++17" mode.
 
 ### Use It
 
-Include the library and create a *Timer* instance.
+Include the library and create a *TimerSet* instance.
 ```cpp
 #include <arduino-timer.h>
 
-auto timer = timer_create_default();
+auto timerset = Timers::create_default();
 ```
 
-Or using the *Timer* constructors for different task limits / time resolution
+Or using the *TimerSet* constructors for different timer limits / time resolution.
 ```cpp
-Timer<10> timer; // 10 concurrent tasks, using millis as resolution
-Timer<10, micros> timer; // 10 concurrent tasks, using micros as resolution
-Timer<10, micros, int> timer; // 10 concurrent tasks, using micros as resolution, with handler argument of type int
+Timers::TimerSet<10> timerset; // 10 concurrent times, using millis as resolution
+Timers::TimerSet<10, micros, delayMicroseconds> timerset; // 10 concurrent timers, using micros as resolution
 ```
 
-Call *timer*.**tick()** in the loop function
+Call *timerset*.**tick_and_delay()** in the ```loop``` function to execute handlers for any timers
+which have expired and then delay until the next scheduled timer expiration.
 ```cpp
 void loop() {
-    timer.tick();
+    timerset.tick_and_delay();
 }
 ```
 
-Make a function to call when the *Timer* expires
+Call *timerset*.**tick()** in the ```loop``` function to execute handlers for any timers
+which have expired, and then return so additional processing can be handled in the loop function.
 ```cpp
-bool function_to_call(void *argument /* optional argument given to in/at/every */) {
-    return true; // to repeat the action - false to stop
+void loop() {
+    timerset.tick;
+}
+```
+
+Make a function to call (without arguments) when a *Timer* expires.
+```cpp
+Timers::HandlerResult function_to_call() {
+    return { Timers::TimerStatus::repeat, 0 }; // to repeat the action - 'completed' to stop
+}
+```
+
+Make a function to call (with an argument) when a *Timer* expires.
+```cpp
+Timers::HandlerResult function_to_call_with_arg(int value) {
+    return { Timers::TimerStatus::completed, 0 }; // to stop the timer - 'repeat' to repeat the action
+}
+```
+
+Make a function to call (without arguments) when a *Timer* expires, which can reschedule itself based
+on a digital input. In this example, if digital input 4 is active when the function is called, it will
+change its own repeat interval to 5 seconds (5000 millis).
+```cpp
+Timers::HandlerResult function_to_call_and_reschedule() {
+    if (digitalRead(4)) {
+        return { Timers::TimerStatus::reschedule, 5000 }; // to change the repeat interval to 5000 ms
+	} else {
+        return { Timers::TimerStatus::repeat, 0 }; // to repeat the action - 'completed' to stop
+	}
 }
 ```
 
 Call *function\_to\_call* **in** *delay* units of time *(unit of time defaults to milliseconds)*.
 ```cpp
-timer.in(delay, function_to_call);
-timer.in(delay, function_to_call, argument); // or with an optional argument for function_to_call
+timerset.in(delay, function_to_call);
 ```
 
-Call *function\_to\_call* **at** a specific *time*.
+Call *function\_to\_call|_with|_arg* **in** *delay* units of time *(unit of time defaults to milliseconds)*.
 ```cpp
-timer.at(time, function_to_call);
-timer.at(time, function_to_call, argument); // with argument
+timerset.in(delay, [](){ return function_to_call_with_arg(42); });
 ```
 
-Call *function\_to\_call* **every** *interval* units of time.
+Call functions **at** a specific *time*.
 ```cpp
-timer.every(interval, function_to_call);
-timer.every(interval, function_to_call, argument); // with argument
+timerset.at(time, function_to_call);
+timerset.at(time, [](){ return function_to_call_with_arg(42); });
 ```
 
-To **cancel** a *Task*
+Call functions **every** *interval* units of time.
 ```cpp
-auto task = timer.in(delay, function_to_call);
-timer.cancel(task);
+timerset.every(interval, function_to_call);
+timerset.every(interval, [](){ return function_to_call_with_arg(42); });
 ```
 
-Be fancy with **lambdas**
+Call functions **now** and **every** *interval* units of time.
 ```cpp
-timer.in(1000, [](void*) -> bool { return false; });
-timer.in(1000, [](void *argument) -> bool { return argument; }, argument);
+timerset.now_and_every(interval, function_to_call);
+timerset.now_and_every(interval, [](){ return function_to_call_with_arg(42); });
+```
+
+To **cancel** a *Timer*
+```cpp
+auto timer = timerset.in(delay, function_to_call);
+timerset.cancel(timer);
 ```
 
 ### API
@@ -116,22 +151,22 @@ The simplest example, blinking an LED every second *(from examples/blink)*:
 ```cpp
 #include <arduino-timer.h>
 
-auto timer = timer_create_default(); // create a timer with default settings
+auto timerset = Timers::create_default(); // create a timerset with default settings
 
-bool toggle_led(void *) {
+Timers::HandlerResult toggle_led() {
   digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN)); // toggle the LED
-  return true; // keep timer active? true
+  return { Timers::TimerStatus::repeat, 0 }; // keep timer active? true
 }
 
 void setup() {
   pinMode(LED_BUILTIN, OUTPUT); // set LED pin to OUTPUT
 
   // call the toggle_led function every 1000 millis (1 second)
-  timer.every(1000, toggle_led);
+  timerset.every(1000, toggle_led);
 }
 
 void loop() {
-  timer.tick(); // tick the timer
+  timerset.tick_and_delay(); // tick the timer
 }
 ```
 
@@ -141,14 +176,15 @@ Check the LICENSE file - 3-Clause BSD License
 
 ### Notes
 
-Currently only a software timer. Any blocking code delaying *timer*.**tick()** will prevent the timer from moving forward and calling any functions.
+Currently only a software timer. Any blocking code delaying *timerset*.**tick()** will prevent the TimerSet from moving forward and calling any functions.
 
 The library does not do any dynamic memory allocation.
 
-The number of concurrent tasks is a compile time constant, meaning there is a limit to the number of concurrent tasks. The **in / at / every** functions return **NULL** if the *Timer* is full.
+The number of concurrent timers is a compile time constant, meaning there is a limit to the number of concurrent timers. The **in / at / every / now_and_every**
+functions return a TimerHandle which evaluates to ```false``` if the TimerSet is full.
 
-A *Task* value is valid only for the timer that created it, and only for the lifetime of that timer.
+A *TimerHandle* value is valid only for the TimerSet that created it, and only for the lifetime of that timer.
 
-Change the number of concurrent tasks using the *Timer* constructors. Save memory by reducing the number, increase memory use by having more. The default is **TIMER_MAX_TASKS** which is currently 16.
+Change the number of concurrent timers using the *Timer* constructors. Save memory by reducing the number, increase memory use by having more. The default is **TIMERSET_DEFAULT_TIMERS** which is currently 16.
 
 If you find this project useful, [consider becoming a sponsor.](https://github.com/sponsors/contrem)

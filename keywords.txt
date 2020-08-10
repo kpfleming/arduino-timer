@@ -6,19 +6,24 @@
 # Datatypes (KEYWORD1)
 #######################################
 
-Timer	KEYWORD1
-Task	KEYWORD1
-handler_t	KEYWORD1
+HandlerResult	KEYWORD1
+Timepoint	KEYWORD1
+Timer		KEYWORD1
+TimerHandle	KEYWORD1
+TimerSet	KEYWORD1
+TimerStatus	KEYWORD1
 
 #######################################
 # Methods and Functions (KEYWORD2)
 #######################################
 
-in	KEYWORD2
-at	KEYWORD2
-every	KEYWORD2
-tick	KEYWORD2
-cancel	KEYWORD2
+in		KEYWORD2
+at		KEYWORD2
+every		KEYWORD2
+now_and_every	KEYWORD2
+tick		KEYWORD2
+cancel		KEYWORD2
+tick_and_delay	KEYWORD2
 
 #######################################
 # Instances (KEYWORD2)
@@ -28,4 +33,4 @@ cancel	KEYWORD2
 # Constants (LITERAL1)
 #######################################
 
-TIMER_MAX_TASKS	LITERAL1
+TIMERSET_DEFAULT_TIMERS	LITERAL1
