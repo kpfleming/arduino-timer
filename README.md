@@ -2,7 +2,7 @@
 
 Simple *non-blocking* timer library for calling functions **in / at / every** specified units of time. Supports millis, micros, time rollover, and compile-time configurable number of timers.
 
-This library was inspired by [Michael Contreras' arduino-timer library](https://github.com/sponsors/contrem/arduino-timer), but has been rewritten to make use of 'modern C++' types and
+This library was inspired by [Michael Contreras' arduino-timer library](https://github.com/contrem/arduino-timer), but has been rewritten to make use of 'modern C++' types and
 functionality. As a result this library requires that the Arduino IDE toolchain be manually configured for "gnu++17" mode.
 
 ### Use It
@@ -16,8 +16,8 @@ auto timerset = Timers::create_default();
 
 Or using the *TimerSet* constructors for different timer limits / time resolution.
 ```cpp
-Timers::TimerSet<10> timerset; // 10 concurrent times, using millis as resolution
-Timers::TimerSet<10, micros, delayMicroseconds> timerset; // 10 concurrent timers, using micros as resolution
+Timers::TimerSet<10> timerset; // 10 concurrent timers, using millis as resolution
+Timers::TimerSet<10, micros, delayMicroseconds> microtimerset; // 10 concurrent timers, using micros as resolution
 ```
 
 Call *timerset*.**tick_and_delay()** in the ```loop``` function to execute handlers for any timers
@@ -32,7 +32,7 @@ Call *timerset*.**tick()** in the ```loop``` function to execute handlers for an
 which have expired, and then return so additional processing can be handled in the loop function.
 ```cpp
 void loop() {
-    timerset.tick;
+    timerset.tick();
 }
 ```
 
@@ -144,7 +144,7 @@ void cancel(Timer<>::Task &task);
 
 ### Examples
 
-Found in the **examples/** folder.
+Found in the [**examples**](examples) folder.
 
 The simplest example, blinking an LED every second *(from examples/blink)*:
 
