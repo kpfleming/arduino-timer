@@ -52,7 +52,7 @@
 
 namespace Timers {
 
-typedef unsigned long Timepoint;
+using Timepoint = unsigned long;
 
 enum class TimerStatus
 	{
@@ -61,9 +61,9 @@ enum class TimerStatus
 	 reschedule
 	};
 
-typedef std::tuple<TimerStatus, Timepoint> HandlerResult;
+using HandlerResult = std::tuple<TimerStatus, Timepoint>;
 
-typedef std::function<HandlerResult (void)> Handler;
+using Handler = std::function<HandlerResult (void)>;
 
 struct Timer {
 	Handler handler;
@@ -78,7 +78,7 @@ struct Timer {
 	Timer& operator=(const Timer&) = delete;
 };
 
-typedef std::optional<std::reference_wrapper<Timer>> TimerHandle;
+using TimerHandle = std::optional<std::reference_wrapper<Timer>>;
 
 template <
 	size_t max_timers = TIMERSET_DEFAULT_TIMERS, // max number of timers
