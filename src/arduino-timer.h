@@ -115,13 +115,13 @@ class TimerSet {
 	TimerHandle
 	add_timer(Timepoint start, Timepoint expires, Handler h, Timepoint repeat = 0)
 	{
-		if (auto timer = next_timer_slot(); timer != timers.end()) {
-			timer->handler = h;
-			timer->start = start;
-			timer->expires = expires;
-			timer->repeat = repeat;
+		if (auto it = next_timer_slot(); it != timers.end()) {
+			it->handler = h;
+			it->start = start;
+			it->expires = expires;
+			it->repeat = repeat;
 
-			return TimerHandle(*timer);
+			return TimerHandle(*it);
 		}
 		else {
 			return TimerHandle();
