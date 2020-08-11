@@ -55,7 +55,7 @@ using Timepoint = unsigned long;
 
 enum class TimerStatus
 	{
-	 complete,
+	 completed,
 	 repeat,
 	 reschedule
 	};
@@ -204,7 +204,7 @@ public:
 			return;
 		}
 
-		auto timer = handle.value().get();
+		auto& timer = handle.value().get();
 
 		if (!timer.handler) {
 			return;
@@ -233,7 +233,7 @@ public:
 				auto [ status, next ] = timer.handler();
 
 				switch (status) {
-				case TimerStatus::complete:
+				case TimerStatus::completed:
 					remove(timer);
 					break;
 				case TimerStatus::repeat:
