@@ -151,9 +151,7 @@ void cancel(Timers::TimerHandle timer);
 
 ### Installation
 
-[Check out the instructions](https://www.arduino.cc/en/Guide/Libraries) from Arduino.
-
-**OR** copy **src/arduino-timer.h** into your project folder *(you won't get managed updates this way)*.
+Copy **src/arduino-timer-cpp17.h** into your project folder.
 
 ### Examples
 
@@ -162,13 +160,13 @@ Found in the [**examples**](examples) folder.
 The simplest example, blinking an LED every second *(from examples/blink)*:
 
 ```cpp
-#include <arduino-timer.h>
+#include <arduino-timer-cpp17.h>
 
 auto timerset = Timers::create_default(); // create a timerset with default settings
 
 Timers::HandlerResult toggle_led() {
   digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN)); // toggle the LED
-  return Timers::TimerStatus::repeat; // keep timer active? true
+  return Timers::TimerStatus::repeat;
 }
 
 void setup() {
@@ -199,5 +197,3 @@ functions return a TimerHandle which evaluates to ```false``` if the TimerSet is
 A *TimerHandle* value is valid only for the TimerSet that created it, and only for the lifetime of that timer.
 
 Change the number of concurrent timers using the *Timer* constructors. Save memory by reducing the number, increase memory use by having more. The default is **TIMERSET_DEFAULT_TIMERS** which is currently 16.
-
-If you find this project useful, [consider becoming a sponsor.](https://github.com/sponsors/contrem)
