@@ -16,19 +16,19 @@ auto timerset = Timers::create_default();
 
 Or using the *TimerSet* constructors for different timer limits / time clocks.
 ```cpp
-Timers::TimerSet<10> timerset; // 10 concurrent timers, using millisecond clock
-Timers::TimerSet<10, Timers::Clock::micros> microtimerset; // 10 concurrent timers, using microsecond clock
+Timers::TimerSet<10> timerset; // 10 concurrent Timers, using millisecond clock
+Timers::TimerSet<10, Timers::Clock::micros> microtimerset; // 10 concurrent Timers, using microsecond clock
 ```
 
-Call *timerset*.**tick_and_delay()** in the ```loop``` function to execute handlers for any timers
-which have expired and then delay until the next scheduled timer expiration.
+Call *timerset*.**tick_and_delay()** in the ```loop``` function to execute handlers for any Timers
+which have expired and then delay until the next scheduled Timer expiration.
 ```cpp
 void loop() {
     timerset.tick_and_delay();
 }
 ```
 
-Call *timerset*.**tick()** in the ```loop``` function to execute handlers for any timers
+Call *timerset*.**tick()** in the ```loop``` function to execute handlers for any Timers
 which have expired, and then return so additional processing can be handled in the loop function.
 ```cpp
 void loop() {
@@ -46,7 +46,7 @@ Timers::HandlerResult function_to_call() {
 Make a function to call (with an argument) when a *Timer* expires.
 ```cpp
 Timers::HandlerResult function_to_call_with_arg(int value) {
-    return Timers::TimerStatus::completed; // to stop the timer - 'repeat' to repeat the action
+    return Timers::TimerStatus::completed; // to stop the Timer - 'repeat' to repeat the action
 }
 ```
 
@@ -101,39 +101,52 @@ timerset.cancel(timer);
 
 ```cpp
 /* Constructors */
-/* Create a timer object with default settings:
-   millis resolution, TIMER_MAX_TASKS (=16) task slots, T = void *
+/* Create a TimerSet object with default settings:
+   millisecond clock, TIMERSET_DEFAULT_TIMERS (=16) Timer slots
 */
-Timer<> timer_create_default(); // auto timer = timer_create_default();
+Timers::TimerSet<> Timers::create_default() // auto timerset = Timers::create_default();
 
-/* Create a timer with max_tasks slots and time_func resolution */
-Timer<size_t max_tasks = TIMER_MAX_TASKS, unsigned long (*time_func)(void) = millis, typename T = void *> timer;
-Timer<> timer; // Equivalent to: auto timer = timer_create_default()
-Timer<10> timer; // Timer with 10 task slots
-Timer<10, micros> timer; // timer with 10 task slots and microsecond resolution
-Timer<10, micros, int> timer; // timer with 10 task slots, microsecond resolution, and handler argument type int
+/* Create a TimerSet with max_timers slots and millisecond clock */
+Timers::TimerSet<size_t max_timers = TIMERSET_DEFAULT_TIMERS, typename clock = Clock::millis>()
 
-/* Signature for handler functions - T = void * by default */
-bool handler(T argument);
+Timers::TimerSet<> timerset; // Equivalent to: auto timerset = Timers::create_default();
+Timers::TimerSet<10> timerset; // TimerSet with 10 Timer slots
+Timers::TimerSet<10, Timers::Clock::micros> timerset; // TimerSet with 10 Timer slots and microsecond clock
 
-/* Timer Methods */
-/* Ticks the timer forward, returns the ticks until next event, or 0 if none */
-unsigned long tick(); // call this function in loop()
+/* Handler function signature; returns a HandlerResult */
+Timers::HandlerResult handler() // declared as Timers::Handler
 
-/* Calls handler with opaque as argument in delay units of time */
-Timer<>::Task
-in(unsigned long delay, handler_t handler, T opaque = T());
+/* HandlerResult contains a TimerStatus, and optional 'next' Timepoint */
+/* (in handler function) */
+return Timers::TimerStatus::completed; // remove Timer from TimerSet
+return Timers::TimerStatus::repeat; // repeat Timer at previously-set interval
+return { Timers::TimerStatus::reschedule, 3000 }; // repeat Timer at new interval of 3000 clock ticks
 
-/* Calls handler with opaque as argument at time */
-Timer<>::Task
-at(unsigned long time, handler_t handler, T opaque = T());
+/* TimerSet Methods */
+// Ticks the TimerSet forward, returns the ticks until next event, or 0 if none
+Timers::Timepoint tick(); // call this function in loop()
 
-/* Calls handler with opaque as argument every interval units of time */
-Timer<>::Task
-every(unsigned long interval, handler_t handler, T opaque = T());
+// Ticks the TimerSet forward, and delays until the next event
+void tick_and_delay(); // call this function in loop()
 
-/* Cancel a timer task */
-void cancel(Timer<>::Task &task);
+/* Calls handler in delay units of time */
+Timers::TimerHandle
+in(Timers::Timepoint delay, Timers::Handler handler);
+
+/* Calls handler at time */
+Timers::TimerHandle
+at(Timers::Timepoint time, Timers::Handler handler);
+
+/* Calls handler every interval units of time */
+Timers::TimerHandle
+every(Timers::Timepoint interval, Timers::Handler handler);
+
+/* Calls handler now and every interval units of time */
+Timers::TimerHandle
+now_and_every(Timers::Timepoint interval, Timers::Handler handler);
+
+/* Cancel a Timer */
+void cancel(Timers::TimerHandle timer);
 ```
 
 ### Installation
