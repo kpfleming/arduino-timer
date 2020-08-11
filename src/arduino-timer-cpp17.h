@@ -248,8 +248,12 @@ public:
 					remove(timer);
 					break;
 				case TimerStatus::repeat:
-					timer.start = now;
-					timer.expires = timer.repeat;
+					if (timer.repeat > 0) {
+						timer.start = now;
+						timer.expires = timer.repeat;
+					} else {
+						remove(timer);
+					}
 					break;
 				case TimerStatus::reschedule:
 					timer.start = now;
