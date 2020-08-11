@@ -7,7 +7,7 @@
 
 #include <arduino-timer-cpp17.h>
 
-Timers::TimerSet<1, micros, delayMicroseconds> timerset; // create a TimerSet with 1 timer and microsecond resolution
+Timers::TimerSet<1, Timers::Resolution::micros> timerset; // create a TimerSet with 1 timer and microsecond resolution
 
 Timers::HandlerResult toggle_led() {
   digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN)); // toggle the LED

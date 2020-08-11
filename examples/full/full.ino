@@ -16,10 +16,10 @@ auto timerset = Timers::create_default(); // create a TimerSet with default sett
 Timers::TimerSet<> default_timerset; // same as above
 
 // create a TimerSet that can hold 1 concurrent task, with microsecond resolution
-Timers::TimerSet<1, micros, delayMicroseconds> microtimerset;
+Timers::TimerSet<1, Timers::Resolution::micros> microtimerset;
 
 // create a TimerSet that holds 16 tasks, with millisecond resolution
-Timers::TimerSet<16, millis> t_timerset;
+Timers::TimerSet<16, Timers::Resolution::millis> t_timerset;
 
 Timers::HandlerResult toggle_led() {
   digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN)); // toggle the LED

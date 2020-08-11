@@ -17,7 +17,7 @@ auto timerset = Timers::create_default();
 Or using the *TimerSet* constructors for different timer limits / time resolution.
 ```cpp
 Timers::TimerSet<10> timerset; // 10 concurrent timers, using millis as resolution
-Timers::TimerSet<10, micros, delayMicroseconds> microtimerset; // 10 concurrent timers, using micros as resolution
+Timers::TimerSet<10, Timers::Resolution::micros> microtimerset; // 10 concurrent timers, using micros as resolution
 ```
 
 Call *timerset*.**tick_and_delay()** in the ```loop``` function to execute handlers for any timers

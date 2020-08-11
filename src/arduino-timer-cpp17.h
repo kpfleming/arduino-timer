@@ -88,15 +88,46 @@ struct Timer {
 
 using TimerHandle = std::optional<std::reference_wrapper<Timer>>;
 
+struct Resolution {
+	struct millis {};
+	struct micros {};
+};
+
 template <
 	size_t max_timers = TIMERSET_DEFAULT_TIMERS, // max number of timers
-	Timepoint (*time_func)() = millis, // time function for timer
-	void (*delay_func)(Timepoint) = delay // delay function corresponding to time_func
+	typename resolution = Resolution::millis // resolution of timers
 	>
 class TimerSet {
 	std::array<Timer, max_timers> timers;
 
-	inline
+	Timepoint
+	get_clock(Resolution::millis) {
+		return millis();
+	}
+
+	Timepoint
+	get_clock(Resolution::micros) {
+		return micros();
+	}
+
+	void
+	delay_until(Timepoint time, Resolution::millis) {
+		delay(time);
+	}
+
+	void
+	delay_until(Timepoint time, Resolution::micros) {
+		unsigned int micros = time % 1000;
+
+		time -= micros;
+
+		delayMicroseconds(micros);
+
+		if (time > 0) {
+			delay_until(time, Resolution::millis());
+		}
+	}
+
 	void
 	remove(TimerHandle handle)
 	{
@@ -112,14 +143,12 @@ class TimerSet {
 		timer.repeat = 0;
 	}
 
-	inline
 	auto
 	next_timer_slot()
 	{
 		return std::find_if(timers.begin(), timers.end(), [](Timer& t){ return !t.handler; });
 	}
 
-	inline
 	TimerHandle
 	add_timer(Timepoint start, Timepoint expires, Handler h, Timepoint repeat = 0)
 	{
@@ -141,14 +170,14 @@ public:
 	TimerHandle
 	in(Timepoint delay, Handler h)
 	{
-		return add_timer(time_func(), delay, h);
+		return add_timer(get_clock(resolution()), delay, h);
 	}
 
 	// Calls handler at time
 	TimerHandle
 	at(Timepoint time, Handler h)
 	{
-		const Timepoint now = time_func();
+		const Timepoint now = get_clock(resolution());
 		return add_timer(now, time - now, h);
 	}
 
@@ -156,14 +185,14 @@ public:
 	TimerHandle
 	every(Timepoint interval, Handler h)
 	{
-		return add_timer(time_func(), interval, h, interval);
+		return add_timer(get_clock(resolution()), interval, h, interval);
 	}
 
 	// Calls handler immediately and every interval units of time
 	TimerHandle
 	now_and_every(Timepoint interval, Handler h)
 	{
-		const Timepoint now = time_func();
+		const Timepoint now = get_clock(resolution());
 		return add_timer(now, now, h, interval);
 	}
 
@@ -197,7 +226,7 @@ public:
 				continue;
 			}
 
-			Timepoint now = time_func();
+			Timepoint now = get_clock(resolution());
 			Timepoint elapsed = now - timer.start;
 
 			if (elapsed >= timer.expires) {
@@ -221,7 +250,7 @@ public:
 
 		// compute lowest remaining time after all handlers have been executed
 		// (some timers may have expired during handler execution)
-		const Timepoint now = time_func();
+		const Timepoint now = get_clock(resolution());
 
 		for (auto& timer: timers) {
 			if (!timer.handler) {
@@ -239,13 +268,17 @@ public:
 	void
 	tick_and_delay()
 	{
-		delay_func(tick());
+		Timepoint next = tick();
+
+		if (next > 0) {
+			delay_until(next, resolution());
+		}
 	}
 };
 
 
 // create TimerSet with default settings
-inline TimerSet<>
+TimerSet<>
 create_default()
 {
 	return TimerSet<>();
