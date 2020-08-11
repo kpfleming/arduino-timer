@@ -3,7 +3,8 @@
 Simple *non-blocking* timer library for calling functions **in / at / every** specified units of time. Supports millis, micros, time rollover, and compile-time configurable number of timers.
 
 This library was inspired by [Michael Contreras' arduino-timer library](https://github.com/contrem/arduino-timer), but has been rewritten to make use of 'modern C++' types and
-functionality. As a result this library requires that the Arduino IDE toolchain be manually configured for "gnu++17" mode.
+functionality. As a result this library requires that the Arduino IDE toolchain be manually configured for "gnu++17" mode. As of the 1.8.13 version of the Arduino IDE this has
+only been tested with the SAMD-based boards; the toolchain for the MegaAVR-based boards does not provide the C++ standard library so this timer library cannot be used there.
 
 ### Use It
 
