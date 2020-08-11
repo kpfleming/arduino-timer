@@ -3,7 +3,7 @@
  *
  * Full example using the arduino-timer-cpp17 library.
  * Shows:
- *  - Setting a different number of tasks with microsecond resolution
+ *  - Setting a different number of tasks with microsecond clock
  *  - disabling a repeated function
  *  - running a function after a delay
  *  - cancelling a task
@@ -15,11 +15,11 @@
 auto timerset = Timers::create_default(); // create a TimerSet with default settings
 Timers::TimerSet<> default_timerset; // same as above
 
-// create a TimerSet that can hold 1 concurrent task, with microsecond resolution
-Timers::TimerSet<1, Timers::Resolution::micros> microtimerset;
+// create a TimerSet that can hold 1 concurrent task, with microsecond clock
+Timers::TimerSet<1, Timers::Clock::micros> microtimerset;
 
-// create a TimerSet that holds 16 tasks, with millisecond resolution
-Timers::TimerSet<16, Timers::Resolution::millis> t_timerset;
+// create a TimerSet that holds 16 tasks, with millisecond clock
+Timers::TimerSet<16, Timers::Clock::millis> t_timerset;
 
 Timers::HandlerResult toggle_led() {
   digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN)); // toggle the LED
@@ -67,7 +67,7 @@ void setup() {
   auto timer = timerset.every(500, toggle_led);
   timerset.cancel(timer); // this task is now cancelled, and will not run
 
-  // call print_message in 2 seconds, but with microsecond resolution
+  // call print_message in 2 seconds, but with microsecond clock
   microtimerset.in(2000000, [](){ return print_message("delayed two seconds using microseconds"); });
 
   if (!microtimerset.in(5000, [](){ return print_message("never printed"); })) {

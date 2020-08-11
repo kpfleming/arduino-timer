@@ -14,10 +14,10 @@ Include the library and create a *TimerSet* instance.
 auto timerset = Timers::create_default();
 ```
 
-Or using the *TimerSet* constructors for different timer limits / time resolution.
+Or using the *TimerSet* constructors for different timer limits / time clocks.
 ```cpp
-Timers::TimerSet<10> timerset; // 10 concurrent timers, using millis as resolution
-Timers::TimerSet<10, Timers::Resolution::micros> microtimerset; // 10 concurrent timers, using micros as resolution
+Timers::TimerSet<10> timerset; // 10 concurrent timers, using millisecond clock
+Timers::TimerSet<10, Timers::Clock::micros> microtimerset; // 10 concurrent timers, using microsecond clock
 ```
 
 Call *timerset*.**tick_and_delay()** in the ```loop``` function to execute handlers for any timers

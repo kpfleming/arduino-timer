@@ -11,7 +11,7 @@ auto timerset = Timers::create_default(); // create a TimerSet with default sett
 
 Timers::HandlerResult toggle_led() {
   digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN)); // toggle the LED
-  return  Timers::TimerStatus::repeat;
+  return Timers::TimerStatus::repeat;
 }
 
 void setup() {

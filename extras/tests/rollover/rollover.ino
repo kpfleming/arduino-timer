@@ -3,9 +3,9 @@
  */
 
 #include <util/atomic.h>
-#include <arduino-timer.h>
+#include <arduino-timer-cpp17.h>
 
-auto timer = timer_create_default();
+auto timerset = Timers::create_default();
 
 // https://arduino.stackexchange.com/questions/12587/how-can-i-handle-the-millis-rollover
 void set_millis(unsigned long ms)
@@ -18,9 +18,9 @@ void set_millis(unsigned long ms)
 
 void setup() {
     pinMode(LED_BUILTIN, OUTPUT);
-    timer.every(1000, [](void *) -> bool {
+    timerset.every(1000, [](){
         digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
-        return true;
+        return Timers::TimerStatus::repeat;
     });
 }
 
@@ -28,5 +28,5 @@ void loop() {
     // 6-second time loop starting at rollover - 3 seconds
     if (millis() - (-3000) >= 6000)
         set_millis(-3000);
-    timer.tick();
+    timerset.tick();
 }
