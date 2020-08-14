@@ -114,9 +114,11 @@ struct Clock {
 		void
 		delay(Timepoint until) {
 			unsigned int micros = until % 1000;
+			until -= micros;
+			until /= 1000;
 
 			::delayMicroseconds(micros);
-			::delay(until - micros);
+			::delay(until);
 		}
 	};
 
