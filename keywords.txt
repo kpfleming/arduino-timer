@@ -24,6 +24,8 @@ now_and_every	KEYWORD2
 tick		KEYWORD2
 cancel		KEYWORD2
 tick_and_delay	KEYWORD2
+reschedule_at	KEYWORD2
+reschedule_in	KEYWORD2
 
 #######################################
 # Instances (KEYWORD2)

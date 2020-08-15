@@ -147,7 +147,13 @@ Timers::TimerHandle
 now_and_every(Timers::Timepoint interval, Timers::Handler handler);
 
 /* Cancel a Timer */
-void cancel(Timers::TimerHandle timer);
+Timers::TimerHandle cancel(Timers::TimerHandle timer);
+
+/* Reschedules handler to be called in delay units of time */
+Timers::TimerHandle reschedule_in(Timers::TimerHandle handle, Timers::Timepoint delay);
+
+/* Reschedules handler to be called at time */
+Timers::TimerHandle reschedule_at(Timers::TimerHandle handle, Timers::Timepoint when);
 ```
 
 ### Installation

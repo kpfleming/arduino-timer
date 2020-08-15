@@ -60,6 +60,10 @@ void setup() {
   // call the print_message function in five seconds
   t_timerset.in(5000, [](){ return print_message("delayed five seconds"); });
 
+  // call the print_message function in fifteen seconds by scheduling and then rescheduling
+  auto resched_timer = t_timerset.in(5000, [](){ return print_message("delayed fifteen seconds"); });
+  t_timerset.reschedule_in(resched_timer, 15000);
+
   // call the print_message function at time + 10 seconds
   t_timerset.at(millis() + 10000, [](){ return print_message("call at millis() + 10 seconds"); });
 

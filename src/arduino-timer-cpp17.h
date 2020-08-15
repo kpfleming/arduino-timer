@@ -2,6 +2,7 @@
    arduino-timer - library for delaying function calls
 
    Copyright (c) 2018, Michael Contreras
+   Copyright (c) 2020, Kevin P. Fleming
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -178,6 +179,25 @@ class TimerSet {
 		}
 	}
 
+	// Reschedules handler to be called in delay units of time
+	TimerHandle
+	reschedule_timer(TimerHandle handle, Timepoint delay)
+	{
+		if (!handle) {
+			return handle;
+		}
+
+		auto& timer = handle.value().get();
+
+		if (!timer.handler) {
+			return handle;
+		}
+
+		timer.expires = delay;
+
+		return handle;
+	}
+
 public:
 	// Calls handler in delay units of time
 	TimerHandle
@@ -188,10 +208,10 @@ public:
 
 	// Calls handler at time
 	TimerHandle
-	at(Timepoint time, Handler h)
+	at(Timepoint when, Handler h)
 	{
-		const Timepoint now = clock::now();
-		return add_timer(now, time - now, h);
+		Timepoint now = clock::now();
+		return add_timer(now, when - now, h);
 	}
 
 	// Calls handler every interval units of time
@@ -205,25 +225,42 @@ public:
 	TimerHandle
 	now_and_every(Timepoint interval, Handler h)
 	{
-		const Timepoint now = clock::now();
+		Timepoint now = clock::now();
 		return add_timer(now, now, h, interval);
 	}
 
 	// Cancels timer
-	void
+	TimerHandle
 	cancel(TimerHandle handle)
 	{
 		if (!handle) {
-			return;
+			return handle;
 		}
 
 		auto& timer = handle.value().get();
 
 		if (!timer.handler) {
-			return;
+			return handle;
 		}
 
 		remove(timer);
+
+		return handle;
+	}
+
+	// Reschedules handler to be called in delay units of time
+	TimerHandle
+	reschedule_in(TimerHandle handle, Timepoint delay)
+	{
+		return reschedule_timer(handle, delay);
+	}
+
+	// Reschedules handler to be called at time
+	TimerHandle
+	reschedule_at(TimerHandle handle, Timepoint when)
+	{
+		Timepoint now = clock::now();
+		return reschedule_timer(handle, when - now);
 	}
 
 	// Ticks the timerset forward - call this function in loop()
@@ -267,7 +304,7 @@ public:
 
 		// compute lowest remaining time after all handlers have been executed
 		// (some timers may have expired during handler execution)
-		const Timepoint now = clock::now();
+		Timepoint now = clock::now();
 
 		for (auto& timer: timers) {
 			if (!timer.handler) {
