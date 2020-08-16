@@ -1,9 +1,9 @@
 /*
- Test timer rollover handling
- */
+  Test timer rollover handling
+*/
 
 #include <util/atomic.h>
-#include <arduino-timer-cpp17.h>
+#include <arduino-timer-cpp17.hpp>
 
 auto timerset = Timers::create_default();
 
@@ -18,10 +18,11 @@ void set_millis(unsigned long ms)
 
 void setup() {
     pinMode(LED_BUILTIN, OUTPUT);
-    timerset.every(1000, [](){
-        digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
-        return Timers::TimerStatus::repeat;
-    });
+    timerset.every(1000, []()
+			 {
+			     digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
+			     return Timers::TimerStatus::repeat;
+			 });
 }
 
 void loop() {

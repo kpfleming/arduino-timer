@@ -1,8 +1,8 @@
 /*
- Test timer rollover handling
- */
+  Test timer rollover handling
+*/
 
-#include <arduino-timer-cpp17.h>
+#include <arduino-timer-cpp17.hpp>
 
 Timers::Timepoint wrapping_millis();
 
@@ -21,16 +21,18 @@ Timers::Timepoint wrapping_millis()
 
 void setup() {
     pinMode(LED_BUILTIN, OUTPUT);
-    _timerset.every(1, [](){
-        ++_millis; // increase _millis every millisecond
-        return Timers::TimerStatus::repeat;
-    });
+    _timerset.every(1, []()
+		       {
+			   ++_millis; // increase _millis every millisecond
+			   return Timers::TimerStatus::repeat;
+		       });
 
     // should blink the LED every second, regardless of wrapping
-    timerset.every(1000, [](){
-        digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
-        return Timers::TimerStatus::repeat;
-    });
+    timerset.every(1000, []()
+			 {
+			     digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
+			     return Timers::TimerStatus::repeat;
+			 });
 }
 
 void loop() {

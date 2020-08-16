@@ -10,7 +10,7 @@ only been tested with the SAMD-based boards; the toolchain for the MegaAVR-based
 
 Include the library and create a *TimerSet* instance.
 ```cpp
-#include <arduino-timer-cpp17.h>
+#include <arduino-timer-cpp17.hpp>
 
 auto timerset = Timers::create_default();
 ```
@@ -158,7 +158,7 @@ Timers::TimerHandle reschedule_at(Timers::TimerHandle handle, Timers::Timepoint 
 
 ### Installation
 
-Copy **src/arduino-timer-cpp17.h** into your project folder.
+Copy **src/arduino-timer-cpp17.hpp** into your project folder.
 
 ### Examples
 
@@ -167,7 +167,7 @@ Found in the [**examples**](examples) folder.
 The simplest example, blinking an LED every second *(from examples/blink)*:
 
 ```cpp
-#include <arduino-timer-cpp17.h>
+#include <arduino-timer-cpp17.hpp>
 
 auto timerset = Timers::create_default(); // create a timerset with default settings
 
