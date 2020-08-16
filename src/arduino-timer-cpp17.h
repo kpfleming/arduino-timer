@@ -181,7 +181,7 @@ class TimerSet {
 
 	// Reschedules handler to be called in delay units of time
 	TimerHandle
-	reschedule_timer(TimerHandle handle, Timepoint delay)
+	reschedule_timer(TimerHandle handle, Timepoint start, Timepoint expires)
 	{
 		if (!handle) {
 			return handle;
@@ -193,7 +193,8 @@ class TimerSet {
 			return handle;
 		}
 
-		timer.expires = delay;
+		timer.start = start;
+		timer.expires = expires;
 
 		return handle;
 	}
@@ -252,7 +253,7 @@ public:
 	TimerHandle
 	reschedule_in(TimerHandle handle, Timepoint delay)
 	{
-		return reschedule_timer(handle, delay);
+		return reschedule_timer(handle, clock::now(), delay);
 	}
 
 	// Reschedules handler to be called at time
@@ -260,7 +261,7 @@ public:
 	reschedule_at(TimerHandle handle, Timepoint when)
 	{
 		Timepoint now = clock::now();
-		return reschedule_timer(handle, when - now);
+		return reschedule_timer(handle, now, when - now);
 	}
 
 	// Ticks the timerset forward - call this function in loop()
