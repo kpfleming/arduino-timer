@@ -61,7 +61,8 @@ enum class TimerStatus
      reschedule
     };
 
-struct HandlerResult {
+struct HandlerResult
+{
     TimerStatus status;
     Timepoint next;
 
@@ -74,7 +75,8 @@ struct HandlerResult {
 
 using Handler = std::function<HandlerResult (void)>;
 
-struct Timer {
+struct Timer
+{
     Handler handler;
     Timepoint start; // when timer was added (or repeat execution began)
     Timepoint expires; // when the timer expires
@@ -89,31 +91,35 @@ struct Timer {
 
 using TimerHandle = std::optional<std::reference_wrapper<Timer>>;
 
-struct Clock {
-    struct millis {
+struct Clock
+{
+    struct millis
+    {
 	static
-	Timepoint
-	now() {
+	Timepoint now() noexcept
+	{
 	    return ::millis();
 	}
 
 	static
 	void
-	delay(Timepoint until) {
+	delay(Timepoint until) noexcept
+	{
 	    ::delay(until);
 	}
     };
 
-    struct micros {
+    struct micros
+    {
 	static
-	Timepoint
-	now() {
+	Timepoint now() noexcept
+	{
 	    return ::micros();
 	}
 
 	static
-	void
-	delay(Timepoint until) {
+	void delay(Timepoint until) noexcept
+	{
 	    unsigned int micros = until % 1000;
 	    until -= micros;
 	    until /= 1000;
@@ -126,10 +132,11 @@ struct Clock {
     template <
 	Timers::Timepoint (*clock_func)()
 	>
-    struct custom {
+    struct custom
+    {
 	static
-	Timepoint
-	now() {
+	Timepoint now() noexcept
+	{
 	    return clock_func();
 	}
     };
@@ -139,11 +146,12 @@ template <
     size_t max_timers = TIMERSET_DEFAULT_TIMERS, // max number of timers
     typename clock = Clock::millis // clock for timers
     >
-class TimerSet {
+class TimerSet
+{
     std::array<Timer, max_timers> timers;
 
     void
-    remove(TimerHandle handle)
+    remove(TimerHandle handle) noexcept
     {
 	if (!handle) {
 	    return;
@@ -158,13 +166,13 @@ class TimerSet {
     }
 
     auto
-    next_timer_slot()
+    next_timer_slot() noexcept
     {
 	return std::find_if(timers.begin(), timers.end(), [](Timer& t){ return !t.handler; });
     }
 
     TimerHandle
-    add_timer(Timepoint start, Timepoint expires, Handler h, Timepoint repeat = 0)
+    add_timer(Timepoint start, Timepoint expires, Handler h, Timepoint repeat = 0) noexcept
     {
 	if (auto it = next_timer_slot(); it != timers.end()) {
 	    it->handler = h;
@@ -181,7 +189,7 @@ class TimerSet {
 
     // Reschedules handler to be called in delay units of time
     TimerHandle
-    reschedule_timer(TimerHandle handle, Timepoint start, Timepoint expires)
+    reschedule_timer(TimerHandle handle, Timepoint start, Timepoint expires) noexcept
     {
 	if (!handle) {
 	    return handle;
@@ -202,14 +210,14 @@ class TimerSet {
 public:
     // Calls handler in delay units of time
     TimerHandle
-    in(Timepoint delay, Handler h)
+    in(Timepoint delay, Handler h) noexcept
     {
 	return add_timer(clock::now(), delay, h);
     }
 
     // Calls handler at time
     TimerHandle
-    at(Timepoint when, Handler h)
+    at(Timepoint when, Handler h) noexcept
     {
 	Timepoint now = clock::now();
 	return add_timer(now, when - now, h);
@@ -217,14 +225,14 @@ public:
 
     // Calls handler every interval units of time
     TimerHandle
-    every(Timepoint interval, Handler h)
+    every(Timepoint interval, Handler h) noexcept
     {
 	return add_timer(clock::now(), interval, h, interval);
     }
 
     // Calls handler immediately and every interval units of time
     TimerHandle
-    now_and_every(Timepoint interval, Handler h)
+    now_and_every(Timepoint interval, Handler h) noexcept
     {
 	Timepoint now = clock::now();
 	return add_timer(now, now, h, interval);
@@ -232,7 +240,7 @@ public:
 
     // Cancels timer
     TimerHandle
-    cancel(TimerHandle handle)
+    cancel(TimerHandle handle) noexcept
     {
 	if (!handle) {
 	    return handle;
@@ -251,14 +259,14 @@ public:
 
     // Reschedules handler to be called in delay units of time
     TimerHandle
-    reschedule_in(TimerHandle handle, Timepoint delay)
+    reschedule_in(TimerHandle handle, Timepoint delay) noexcept
     {
 	return reschedule_timer(handle, clock::now(), delay);
     }
 
     // Reschedules handler to be called at time
     TimerHandle
-    reschedule_at(TimerHandle handle, Timepoint when)
+    reschedule_at(TimerHandle handle, Timepoint when) noexcept
     {
 	Timepoint now = clock::now();
 	return reschedule_timer(handle, now, when - now);
@@ -267,7 +275,7 @@ public:
     // Ticks the timerset forward - call this function in loop()
     // returns Timepoint of next timer expiration */
     Timepoint
-    tick()
+    tick() noexcept
     {
 	Timepoint next_expiration = std::numeric_limits<Timepoint>::max();
 
@@ -321,7 +329,7 @@ public:
 
     // Ticks the timerset forward, then delays until next timer is due
     void
-    tick_and_delay()
+    tick_and_delay() noexcept
     {
 	clock::delay(tick());
     }
@@ -330,7 +338,7 @@ public:
 
 // create TimerSet with default settings
 TimerSet<>
-create_default()
+create_default() noexcept
 {
     return TimerSet<>();
 }
