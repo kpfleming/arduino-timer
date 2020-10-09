@@ -87,6 +87,12 @@ struct Timer
     Timer() = default;
     Timer(const Timer&) = delete;
     Timer& operator=(const Timer&) = delete;
+
+    // boolean to indicate whether this timer is active
+    explicit operator bool() const noexcept
+    {
+	return static_cast<bool>(handler);
+    }
 };
 
 using TimerHandle = std::optional<std::reference_wrapper<Timer>>;
@@ -166,9 +172,9 @@ class TimerSet
     }
 
     auto
-    next_timer_slot() noexcept
+    next_timer_slot() const noexcept
     {
-	return std::find_if(timers.begin(), timers.end(), [](Timer& t){ return !t.handler; });
+	return std::find_if(timers.begin(), timers.end(), [](Timer& t){ return !t; });
     }
 
     TimerHandle
@@ -197,7 +203,7 @@ class TimerSet
 
 	auto& timer = handle.value().get();
 
-	if (!timer.handler) {
+	if (!timer) {
 	    return handle;
 	}
 
@@ -248,7 +254,7 @@ public:
 
 	auto& timer = handle.value().get();
 
-	if (!timer.handler) {
+	if (!timer) {
 	    return handle;
 	}
 
@@ -281,7 +287,7 @@ public:
 
 	// execute handlers for any timers which have expired
 	for (auto& timer: timers) {
-	    if (!timer.handler) {
+	    if (!timer) {
 		continue;
 	    }
 
@@ -316,7 +322,7 @@ public:
 	Timepoint now = clock::now();
 
 	for (auto& timer: timers) {
-	    if (!timer.handler) {
+	    if (!timer) {
 		continue;
 	    }
 
