@@ -172,7 +172,7 @@ class TimerSet
     }
 
     auto
-    next_timer_slot() const noexcept
+    next_timer_slot() noexcept
     {
 	return std::find_if(timers.begin(), timers.end(), [](Timer& t){ return !t; });
     }
