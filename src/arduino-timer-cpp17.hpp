@@ -341,12 +341,4 @@ public:
     }
 };
 
-
-// create TimerSet with default settings
-TimerSet<>
-create_default() noexcept
-{
-    return TimerSet<>();
-}
-
 }; // end namespace Timers
