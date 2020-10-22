@@ -178,10 +178,10 @@ class TimerSet
     }
 
     TimerHandle
-    add_timer(Timepoint start, Timepoint expires, Handler h, Timepoint repeat = 0) noexcept
+    add_timer(Timepoint start, Timepoint expires, Handler&& h, Timepoint repeat = 0) noexcept
     {
 	if (auto it = next_timer_slot(); it != timers.end()) {
-	    it->handler = h;
+	    it->handler = std::move(h);
 	    it->start = start;
 	    it->expires = expires;
 	    it->repeat = repeat;
@@ -216,32 +216,32 @@ class TimerSet
 public:
     // Calls handler in delay units of time
     TimerHandle
-    in(Timepoint delay, Handler h) noexcept
+    in(Timepoint delay, Handler&& h) noexcept
     {
-	return add_timer(clock::now(), delay, h);
+	return add_timer(clock::now(), delay, std::move(h));
     }
 
     // Calls handler at time
     TimerHandle
-    at(Timepoint when, Handler h) noexcept
+    at(Timepoint when, Handler&& h) noexcept
     {
 	Timepoint now = clock::now();
-	return add_timer(now, when - now, h);
+	return add_timer(now, when - now, std::move(h));
     }
 
     // Calls handler every interval units of time
     TimerHandle
-    every(Timepoint interval, Handler h) noexcept
+    every(Timepoint interval, Handler&& h) noexcept
     {
-	return add_timer(clock::now(), interval, h, interval);
+	return add_timer(clock::now(), interval, std::move(h), interval);
     }
 
     // Calls handler immediately and every interval units of time
     TimerHandle
-    now_and_every(Timepoint interval, Handler h) noexcept
+    now_and_every(Timepoint interval, Handler&& h) noexcept
     {
 	Timepoint now = clock::now();
-	return add_timer(now, now, h, interval);
+	return add_timer(now, now, std::move(h), interval);
     }
 
     // Cancels timer
