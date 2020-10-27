@@ -87,6 +87,8 @@ struct Timer
     Timer() = default;
     Timer(const Timer&) = delete;
     Timer& operator=(const Timer&) = delete;
+    Timer(Timer&&) = delete;
+    Timer& operator=(Timer&&) = delete;
 
     // boolean to indicate whether this timer is active
     explicit operator bool() const noexcept
